@@ -1,16 +1,17 @@
-from urllib.request import urlopen as uReq
-from bs4 import BeautifulSoup
-import json
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
+for table in list:  # Sorts through tables
+    # Sorts through gold count per player in given table
+    tableGold = table.find_all("div", {"class": "sb-p-stat sb-p-stat-gold"})
+    # Sorts through name per player in given table
+    tableName = table.find_all("div", {"class": "sb-p-name"})
+    gameTime = table.find_all("tr", id=lambda value: value and value.startswith("sb-allw"))
 
-url = "https://www.trackingthepros.com/players/"
-page = uReq(url)
-soup = BeautifulSoup(page, 'html.parser')
-pageHTML = page.read()
+    print(gameTime)
+    for EachPart in gameTime:
+        print("alert")
 
-driver = webdriver.Firefox()
-driver.get(url)
-submit_assignment = driver.find_element_by_id('form-control input-sm')
-submit_assignent.click()
+    for i in range(10):  # Max 10 players per match
+        if in_list(tableName[i].text, masterArray) != -1:
+            value_index = in_list(tableName[i].text, masterArray)
+            masterArray[value_index].append(Decimal(tableGold[i].text[:-1]))
+        else:
+            masterArray.append([tableName[i].text, Decimal(tableGold[i].text[:-1])])
