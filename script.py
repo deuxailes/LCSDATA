@@ -9,7 +9,6 @@ import json
 
 # This enables floats to be manipulated by the decimal library
 from openpyxl.utils import get_column_letter
-from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 
 getcontext()
 Context(prec=28, rounding=ROUND_HALF_EVEN, Emin=-999999, Emax=999999,
@@ -73,10 +72,10 @@ def in_list(item, L):
 def main():
     for table in list:
         matchLink = table.find_all("div", {"class": "sb-datetime-mh"})
-        print(matchLink)
+        #print(matchLink)
         for div in matchLink:
-            print(div['href'][0])
-            matchHistoryPage.append(div.find('a')['href'])
+            i = div.find('a')
+            matchHistoryPage.append(i['href'])
 
     for i in range(len(matchHistoryPage)):
         URL = matchHistoryPage[i]
