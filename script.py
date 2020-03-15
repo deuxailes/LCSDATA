@@ -81,19 +81,19 @@ for i in range(len(masterArray)):
     ws.cell(row=row, column=1).value = masterArray[i][0]
     ws.cell(row=row, column=2).value = masterArray[i][1]
     if len(masterArray[i]) == 3:
-        ws.cell(row=row, column=3).value = masterArray[i][2]
-        ws.cell(row=row, column=4).value = Decimal((masterArray[i][2] + masterArray[i][1]) / Decimal(2))
+        ws.cell(row=row, column=4).value = masterArray[i][2]
+        ws.cell(row=row, column=6).value = Decimal((masterArray[i][2] + masterArray[i][1]) / Decimal(2))
 
 ws.conditional_formatting.add('B1:B52',
                               ColorScaleRule(start_type='percentile', start_value=10, start_color='ea7d7d',
                                              mid_type='percentile', mid_value=50, mid_color='C0C0C0',
                                              end_type='percentile', end_value=90, end_color='9de7b1'))
 
-ws.conditional_formatting.add('C1:C52',
+ws.conditional_formatting.add('D1:D52',
                               ColorScaleRule(start_type='percentile', start_value=10, start_color='ea7d7d',
                                              mid_type='percentile', mid_value=50, mid_color='C0C0C0',
                                              end_type='percentile', end_value=90, end_color='9de7b1'))
-ws.conditional_formatting.add('D1:D52',
+ws.conditional_formatting.add('F1:F52',
                               ColorScaleRule(start_type='percentile', start_value=10, start_color='AA0000',
                                              mid_type='percentile', mid_value=50, mid_color='C0C0C0',
                                              end_type='percentile', end_value=90, end_color='00AA00'))
