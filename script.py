@@ -6,6 +6,13 @@ from openpyxl.formatting.rule import ColorScale, FormatObject, CellIsRule, Color
 from decimal import *
 import pandas
 import json
+from selenium import webdriver  # Import module
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import *
+import time  # Waiting function
 
 # This enables floats to be manipulated by the decimal library
 from openpyxl.utils import get_column_letter
@@ -19,15 +26,12 @@ getcontext().prec = 4
 wb = Workbook()
 ws = wb.active
 
+browser = webdriver.Firefox()
+wait = WebDriverWait(browser, 10)
+# Define URL
 uClient = uReq("https://lol.gamepedia.com/LCS/2020_Season/Spring_Season/Scoreboards/Week_7")
 matchHistoryPage = []
 page_html = uClient.read()
-
-# dataURL = "http://na.lolesports.com/api/player/84.json"
-# response = uReq(dataURL)
-# data = response.read().decode("UTF-8")
-uClient.close()
-
 page_soup = BeautifulSoup(page_html, "html.parser")
 
 ws.cell(row=1, column=1).value = "Name"
@@ -49,77 +53,153 @@ ws.cell(row=1, column=7).font = Font(size=12)
 ws.cell(row=1, column=8).font = Font(size=12)
 
 list = page_soup.findAll("div", attrs={"class": "inline-content"})
-
 masterArray = []
 playerLength = 0
 redFill = PatternFill(start_color='EE1111', end_color='EE1111', fill_type='solid')
 minGold = 0
-
-
-#def site_login(URL):
-    #driver.get(URL)
-    #driver.find_element_by_id(“ID”).send_keys(“username”)
-    #driver.find_element_by_id(“ID”).send_keys(“password”)
-    #river.find_element_by_id(“submit”).click()
+dummyDict = {}
+day1Dict = {}
+day2Dict = {}
+day3Dict = {}
+weekDict = {'DAY1': day1Dict, 'DAY2': day2Dict, 'DAY3': day3Dict}
 
 
 def in_list(item, L):
-    for x in L:
-        if item in x:
-            return L.index(x)
-    return -1
+    if item is None:
+        return -1
+    else:
+        for x in L:
+            if item in x:
+                return L.index(x)
+        return -1
+
+
+def add_k(sheet):
+    for row in sheet.iter_rows(min_row=2, min_col=2):
+        for cell in row:
+            if cell.value is not None:
+                if float(cell.value):
+                    cell.value = str(cell.value) + "k "
+
+
+def format_color_cells(sheet):
+    sheet.conditional_formatting.add('B1:B52',
+                                     ColorScaleRule(start_type='percentile', start_value=10, start_color='ea7d7d',
+                                                    mid_type='percentile', mid_value=50, mid_color='C0C0C0',
+                                                    end_type='percentile', end_value=90, end_color='9de7b1'))
+
+    sheet.conditional_formatting.add('D1:D52',
+                                     ColorScaleRule(start_type='percentile', start_value=10, start_color='ea7d7d',
+                                                    mid_type='percentile', mid_value=50, mid_color='C0C0C0',
+                                                    end_type='percentile', end_value=90, end_color='9de7b1'))
+    sheet.conditional_formatting.add('F1:F52',
+                                     ColorScaleRule(start_type='percentile', start_value=10, start_color='AA0000',
+                                                    mid_type='percentile', mid_value=50, mid_color='C0C0C0',
+                                                    end_type='percentile', end_value=90, end_color='00AA00'))
+
+
+def is_loaded(path):
+    # path example: //a[@class="login-button btn-large btn-large-primary"]
+    try:
+        e = browser.find_element(By.XPATH, path)
+    except NoSuchElementException:
+        print("not loaded yet")
+        e = None
+    while e is None:
+        try:
+            e = browser.find_element(By.XPATH, path)
+        except NoSuchElementException:
+            print("not loaded yet")
+            e = None
+    return e;
+
 
 def main():
-    for table in list:
-        matchLink = table.find_all("div", {"class": "sb-datetime-mh"})
-        #print(matchLink)
+    for t in list:
+        matchLink = t.find_all("div", {"class": "sb-datetime-mh"})
         for div in matchLink:
             i = div.find('a')
             matchHistoryPage.append(i['href'])
 
+    browser.get('https://matchhistory.na.leagueoflegends.com/en/#page/landing-page')
+
+    is_loaded('//a[@class="login-button btn-large btn-large-primary"]').click()
+    is_loaded('//input[@name="username"]').send_keys('dryrhino4419')
+    is_loaded('//input[@name="password"]').send_keys('gabythebaby1')
+    time.sleep(7)
+    browser.find_element_by_name("password").send_keys(Keys.ENTER)
+    time.sleep(7)
+
     for i in range(len(matchHistoryPage)):
-        URL = matchHistoryPage[i]
-        uClient = uReq(URL)
-        page_html = uClient.read()
-        uClient.close()
+        browser.get(matchHistoryPage[i])
+        time.sleep(3)
+        element = wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="classic details"]')))
+        page_html = element.get_attribute('innerHTML')
         page_soup = BeautifulSoup(page_html, "html.parser")
 
-        loggedInOrNo = page_soup.find("div", {"class": "default-4-7"})
-        print(loggedInOrNo)
+        playersRow = page_soup.findAll('div', {"class": "classic player"})
+        j = 0
+        teamDict = {}
+        playerDict = {}
+        for player in playersRow:
+            playerGold = player.find('div', {"class": "gold-col gold"}).text[:-1]
+            teamName = player.find('div', {"class": "champion-nameplate-name"}).get_text().split(" ", 3)[1]
+            playerName = player.find('div', {"class": "champion-nameplate-name"}).get_text().split(" ", 3)[2]
 
+            value_index = -1
+            if in_list(playerName, masterArray) != -1:
+                value_index = in_list(playerName, masterArray)
+                masterArray[value_index].append(playerGold)
+            else:
+                masterArray.append([playerName, playerGold])
+
+            playerDict.update({playerName: masterArray[value_index]})
+
+            if j >= 5:
+                teamName = player.find('div', {"class": "champion-nameplate-name"}).get_text().split(" ", 3)[1]
+
+            teamDict.update({teamName: playerDict})
+
+            j += 1
+            print(j)
+
+        time.sleep(2)
+
+        if i < 4:
+            weekDict['DAY1'].update(teamDict)
+        elif i == 4 or i < 8:
+            weekDict['DAY2'].update(teamDict)
+        else:
+            weekDict['DAY3'].update(teamDict)
+
+    with open('player_info.JSON', 'w', encoding='utf-8') as f:
+        json.dump(weekDict, f, ensure_ascii=False, indent=4)
+
+    '''
     for i in range(len(masterArray)):
         row = i + 2
         ws.cell(row=row, column=1).value = masterArray[i][0]
-        ws.cell(row=row, column=2).value = masterArray[i][1]
+        ws.cell(row=row, column=2).value = str(masterArray[i][1])
         if len(masterArray[i]) == 3:
             ws.cell(row=row, column=4).value = masterArray[i][2]
             ws.cell(row=row, column=6).value = Decimal((masterArray[i][2] + masterArray[i][1]) / Decimal(2))
+    
+    format_color_cells(ws)
+    add_k(ws)
 
-ws.conditional_formatting.add('B1:B52',
-                              ColorScaleRule(start_type='percentile', start_value=10, start_color='ea7d7d',
-                                             mid_type='percentile', mid_value=50, mid_color='C0C0C0',
-                                             end_type='percentile', end_value=90, end_color='9de7b1'))
+    # This adjusts cell width to biggest cell in column.
+    column_widths = []
+    for row in ws.iter_rows():
+        for i, cell in enumerate(row):
+            try:
+                column_widths[i] = max(column_widths[i], len(str(cell.value)))
+            except IndexError:
+                column_widths.append(len(cell.value))
 
-ws.conditional_formatting.add('D1:D52',
-                              ColorScaleRule(start_type='percentile', start_value=10, start_color='ea7d7d',
-                                             mid_type='percentile', mid_value=50, mid_color='C0C0C0',
-                                             end_type='percentile', end_value=90, end_color='9de7b1'))
-ws.conditional_formatting.add('F1:F52',
-                              ColorScaleRule(start_type='percentile', start_value=10, start_color='AA0000',
-                                             mid_type='percentile', mid_value=50, mid_color='C0C0C0',
-                                             end_type='percentile', end_value=90, end_color='00AA00'))
+    for i, column_width in enumerate(column_widths):
+        ws.column_dimensions[get_column_letter(i + 1)].width = column_width
+'''
 
-# This adjusts cell width to biggest cell in column.
-column_widths = []
-for row in ws.iter_rows():
-    for i, cell in enumerate(row):
-        try:
-            column_widths[i] = max(column_widths[i], len(str(cell.value)))
-        except IndexError:
-            column_widths.append(len(cell.value))
-
-for i, column_width in enumerate(column_widths):
-    ws.column_dimensions[get_column_letter(i + 1)].width = column_width
 
 main()
 wb.save("lwt example.xlsx")
