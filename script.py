@@ -15,14 +15,6 @@ from selenium.common.exceptions import *
 import time  # Waiting function
 
 # This enables floats to be manipulated by the decimal library
-from openpyxl.utils import get_column_letter
-
-getcontext()
-Context(prec=28, rounding=ROUND_HALF_EVEN, Emin=-999999, Emax=999999,
-        capitals=1, clamp=0, flags=[], traps=[Overflow, DivisionByZero,
-                                              InvalidOperation])
-getcontext().prec = 4
-
 wb = Workbook()
 ws = wb.active
 
@@ -34,35 +26,16 @@ matchHistoryPage = []
 page_html = uClient.read()
 page_soup = BeautifulSoup(page_html, "html.parser")
 
-ws.cell(row=1, column=1).value = "Name"
-ws.cell(row=1, column=2).value = "GD1  "
-ws.cell(row=1, column=3).value = "MP1  "
-ws.cell(row=1, column=4).value = "GD2  "
-ws.cell(row=1, column=5).value = "MP2  "
-ws.cell(row=1, column=6).value = "AvG  "
-ws.cell(row=1, column=7).value = "AMP"
-ws.cell(row=1, column=8).value = "GPM"
-
-ws.cell(row=1, column=1).font = Font(size=14)
-ws.cell(row=1, column=2).font = Font(size=12)
-ws.cell(row=1, column=3).font = Font(size=12)
-ws.cell(row=1, column=4).font = Font(size=12)
-ws.cell(row=1, column=5).font = Font(size=12)
-ws.cell(row=1, column=6).font = Font(size=12)
-ws.cell(row=1, column=7).font = Font(size=12)
-ws.cell(row=1, column=8).font = Font(size=12)
-
 list = page_soup.findAll("div", attrs={"class": "inline-content"})
 masterArray = []
 playerLength = 0
-redFill = PatternFill(start_color='EE1111', end_color='EE1111', fill_type='solid')
 minGold = 0
 dummyDict = {}
 day1Dict = {}
 day2Dict = {}
 day3Dict = {}
 weekDict = {'DAY1': day1Dict, 'DAY2': day2Dict, 'DAY3': day3Dict}
-
+positionArray = ['TOP', 'JUNG', 'MID', 'ADC', 'SUP']
 
 def in_list(item, L):
     if item is None:
@@ -111,7 +84,7 @@ def is_loaded(path):
         except NoSuchElementException:
             print("not loaded yet")
             e = None
-    return e;
+    return e
 
 
 def main():
@@ -141,27 +114,64 @@ def main():
         j = 0
         teamDict = {}
         playerDict = {}
+        k = 0
+
+        statTable = page_soup.find('table', {"class": "table table-bordered"})
+        # poop = statTable.findAll('tr')
+        allTheStats = {}
+
+        for x in range(len(statTable.contents[1].contents)):
+            row = statTable.contents[1].contents[x]
+            allTheStats.update({row.get_text(): row})
+
+        minionsKilledRow = statTable.contents[1].contents[32]
+        neutralMinionsKilledRow = statTable.contents[1].contents[33]
+        neutralKilledInTEAMJRow = statTable.contents[1].contents[34]
+        neutralKilledInENMJRow = statTable.contents[1].contents[35]
+        largestKillingSpreeRow = statTable.contents[1].contents[3]
+
         for player in playersRow:
+            statDick = {}
             playerGold = player.find('div', {"class": "gold-col gold"}).text[:-1]
             teamName = player.find('div', {"class": "champion-nameplate-name"}).get_text().split(" ", 3)[1]
             playerName = player.find('div', {"class": "champion-nameplate-name"}).get_text().split(" ", 3)[2]
+            kills = player.find('div', {"class": "kda-kda"}).get_text().split("/", 3)[0]
+            deaths = player.find('div', {"class": "kda-kda"}).get_text().split("/", 3)[1]
+            assists = player.find('div', {"class": "kda-kda"}).get_text().split("/", 3)[2]
+            champion = player.find('div', {"data-rg-name": "champion_10.4.1"}).get('data-rg-id')
+            minionsKilled = minionsKilledRow.contents[j + 1].get_text()
+            neutralMinionsKilled = neutralMinionsKilledRow.contents[j + 1].get_text()
+            neutralKilledInTEAMJ = neutralKilledInTEAMJRow.contents[j + 1].get_text()
+            neutralKilledInENMJ = neutralKilledInENMJRow.contents[j + 1].get_text()
+            largestKillingSpree = largestKillingSpreeRow.contents[j + 1].get_text()
 
-            value_index = -1
-            if in_list(playerName, masterArray) != -1:
-                value_index = in_list(playerName, masterArray)
-                masterArray[value_index].append(playerGold)
-            else:
-                masterArray.append([playerName, playerGold])
+            if j == 5:
+                playerDict = {}
+                statDick = {}
+                k = 0
 
-            playerDict.update({playerName: masterArray[value_index]})
+            statDick.update({"index": k})
+            statDick.update({"position": positionArray[k]})
+            statDick.update({"champion": champion})
+            statDick.update({"gold": playerGold})
+            statDick.update({"kills": kills})
+            statDick.update({"deaths": deaths})
+            statDick.update({"assists": assists})
+            statDick.update({"minions_killed": minionsKilled})
+            statDick.update({"neutral_minions_killed": neutralMinionsKilled})
+            statDick.update({"neutral_minions_killed_team_jungle": neutralKilledInTEAMJ})
+            statDick.update({"neutral_minions_killed_enemy_jungle": neutralKilledInENMJ})
+            statDick.update({"largest_killing_spree": largestKillingSpree})
 
-            if j >= 5:
+            playerDict.update({playerName: statDick})
+
+            k += 1
+            if j > 5:
                 teamName = player.find('div', {"class": "champion-nameplate-name"}).get_text().split(" ", 3)[1]
 
             teamDict.update({teamName: playerDict})
 
             j += 1
-            print(j)
 
         time.sleep(2)
 
@@ -174,6 +184,8 @@ def main():
 
     with open('player_info.JSON', 'w', encoding='utf-8') as f:
         json.dump(weekDict, f, ensure_ascii=False, indent=4)
+
+    print(json.dump(allTheStats, f, ensure_ascii=False, indent=4))
 
     '''
     for i in range(len(masterArray)):
@@ -202,4 +214,4 @@ def main():
 
 
 main()
-wb.save("lwt example.xlsx")
+
