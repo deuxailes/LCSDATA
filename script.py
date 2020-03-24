@@ -13,28 +13,31 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import *
 import time  # Waiting function
+import re
+import copy
 
 # This enables floats to be manipulated by the decimal library
 wb = Workbook()
 ws = wb.active
 
-browser = webdriver.Firefox()
+browser = webdriver.Chrome()
 wait = WebDriverWait(browser, 10)
 # Define URL
-uClient = uReq("https://lol.gamepedia.com/LCS/2020_Season/Spring_Season/Scoreboards/Week_7")
-matchHistoryPage = []
+uClient = uReq("https://lol.gamepedia.com/LCS/2020_Season/Spring_Season/Scoreboards")
 page_html = uClient.read()
 page_soup = BeautifulSoup(page_html, "html.parser")
 
 list = page_soup.findAll("div", attrs={"class": "inline-content"})
-masterArray = []
+weekLinks = page_soup.find_all('div', {'class': 'tabheader-top'})[2].find_all('a', href=re.compile("Week"))
+
+matchHistoryPage = []
 playerLength = 0
 minGold = 0
-dummyDict = {}
 day1Dict = {}
 day2Dict = {}
 day3Dict = {}
 weekDict = {'DAY1': day1Dict, 'DAY2': day2Dict, 'DAY3': day3Dict}
+seasonDick = {}
 positionArray = ['TOP', 'JUNG', 'MID', 'ADC', 'SUP']
 
 
@@ -88,15 +91,29 @@ def is_loaded(path):
     return e
 
 
-def main():
-    for t in list:
+def get_links():
+    for t in list:  # finds links for week 1
         matchLink = t.find_all("div", {"class": "sb-datetime-mh"})
         for div in matchLink:
             i = div.find('a')
             matchHistoryPage.append(i['href'])
 
-    browser.get('https://matchhistory.na.leagueoflegends.com/en/#page/landing-page')
+    for week in weekLinks:  # finds links for rest of weeks
+        print(week['href'])
+        uClient = uReq("https://lol.gamepedia.com" + week['href'])
+        page_html = uClient.read()
+        page_soup = BeautifulSoup(page_html, "html.parser")
+        games = page_soup.findAll("div", attrs={"class": "inline-content"})
+        for game in games:
+            matchLink = game.find_all("div", {"class": "sb-datetime-mh"})
+            for div in matchLink:
+                i = div.find('a')
+                matchHistoryPage.append(i['href'])
 
+
+def main():
+    get_links()
+    browser.get('https://matchhistory.na.leagueoflegends.com/en/#page/landing-page')
     is_loaded('//a[@class="login-button btn-large btn-large-primary"]').click()
     is_loaded('//input[@name="username"]').send_keys('dryrhino4419')
     is_loaded('//input[@name="password"]').send_keys('gabythebaby1')
@@ -104,33 +121,22 @@ def main():
     browser.find_element_by_name("password").send_keys(Keys.ENTER)
     time.sleep(7)
 
-    for i in range(len(matchHistoryPage)):
+    masterI = 0
+    for i in range(len(matchHistoryPage)):  # loops through each match history page
         browser.get(matchHistoryPage[i])
+        browser.refresh()
         time.sleep(3)
         element = wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="classic details"]')))
         page_html = element.get_attribute('innerHTML')
         page_soup = BeautifulSoup(page_html, "html.parser")
 
         playersRow = page_soup.findAll('div', {"class": "classic player"})
-        j = 0
         teamDict = {}
         playerDict = {}
+        j = 0
         k = 0
 
         statTable = page_soup.find('table', {"class": "table table-bordered"})
-        poop = statTable.findAll('tr')
-        allTheStats = {}
-
-        for x in range(2, len(statTable.contents[1].contents)):
-            row = statTable.contents[1].contents[x]
-            tet = row.attrs['class'][0].strip()
-            v = 'view'
-            if tet != v.strip():
-                statlist = []
-                for y in range(1, len(row.contents)):
-                    statlist.append(row.contents[y].get_text())
-                allTheStats.update({row.contents[0].get_text(): statlist})
-
         minionsKilledRow = statTable.contents[1].contents[32]
         neutralMinionsKilledRow = statTable.contents[1].contents[33]
         neutralKilledInTEAMJRow = statTable.contents[1].contents[34]
@@ -147,7 +153,10 @@ def main():
 
             statDick.update({"index": k})
             statDick.update({"position": positionArray[k]})
-            statDick.update({"champion": player.find('div', {"data-rg-name": "champion_10.4.1"}).get('data-rg-id')})
+
+            statDick.update(
+                {"champion": player.find('div', {"class": 'champion-icon binding'}).contents[0].attrs['data-rg-id']})
+
             if j > 4:
                 teamName = player.find('div', {"class": "champion-nameplate-name"}).get_text().split(" ", 3)[1]
                 statDick.update({"laneVS": playersRow[j - 5].find('div', {
@@ -157,6 +166,7 @@ def main():
                 statDick.update({"laneVS": playersRow[j + 5].find('div', {
                     "class": "champion-nameplate-name"}).get_text().split(" ", 3)[2]})
                 statDick.update({"oppCS": minionsKilledRow.contents[j + 6].get_text()})
+
             statDick.update({"gold": player.find('div', {"class": "gold-col gold"}).text[:-1]})
             statDick.update({"kills": player.find('div', {"class": "kda-kda"}).get_text().split("/", 3)[0]})
             statDick.update({"deaths": player.find('div', {"class": "kda-kda"}).get_text().split("/", 3)[1]})
@@ -168,8 +178,7 @@ def main():
             statDick.update({"largest_killing_spree": largestKillingSpreeRow.contents[j + 1].get_text()})
 
             playerDict.update({'duration': duration.get_text()})
-            playerDict.update(
-                {player.find('div', {"class": "champion-nameplate-name"}).get_text().split(" ", 3)[2]: statDick})
+            playerDict.update({player.find('div', {"class": "champion-nameplate-name"}).get_text().split(" ", 3)[2]: statDick})
 
             k += 1
 
@@ -178,20 +187,45 @@ def main():
 
             j += 1
 
-        time.sleep(2)
-
-        if i < 4:
+        if masterI < 4:
             weekDict['DAY1'].update(teamDict)
-        elif i == 4 or i < 8:
+        elif masterI == 4 or masterI < 8:
             weekDict['DAY2'].update(teamDict)
         else:
             weekDict['DAY3'].update(teamDict)
 
-    with open('player_info.JSON', 'w', encoding='utf-8') as f:
-        json.dump(weekDict, f, ensure_ascii=False, indent=4)
+        if masterI == 9:
+            seasonDick.update({'WEEK' + str(-(-(i+1) // 10)): copy.deepcopy(weekDict)})
+            day1Dict.clear()
+            day2Dict.clear()
+            day3Dict.clear()
+            weekDict.update({'DAY1': day1Dict, 'DAY2': day2Dict, 'DAY3': day3Dict})
+            print(-(-(i+1) // 10))
+            masterI = 0
+        else:
+            masterI += 1
 
+    with open('player_info.JSON', 'w', encoding='utf-8') as f:
+        json.dump(seasonDick, f, ensure_ascii=False, indent=4)
 
     add_k(ws)
 
 
 main()
+
+'''
+        allTheStats = {}
+
+        for x in range(2, len(statTable.contents[1].contents)):
+            row = statTable.contents[1].contents[x]
+            tet = row.attrs['class'][0].strip()
+            v = 'view'
+            if tet != v.strip():
+                statlist = []
+                for y in range(1, len(row.contents)):
+                    statlist.append(row.contents[y].get_text())
+                allTheStats.update({row.contents[0].get_text(): statlist})
+
+
+
+'''
