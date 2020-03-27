@@ -26,13 +26,24 @@ obj = json.loads(data)
 def initial_formatting():
     ws.row_dimensions[1].height = 25.5
     ws.row_dimensions[2].height = 21.75
-    ws.row_dimensions[3].height = 29.25
+    ws.row_dimensions[3].height = 27
+
     ws.column_dimensions['K'].width = .5
-    ws.column_dimensions['M'].width = 5.86
-    ws.column_dimensions['N'].width = 5.86
+    ws.column_dimensions['I'].width = .5
+    ws.column_dimensions['O'].width = 5.86
+    ws.column_dimensions['P'].width = 5.86
+    ws.column_dimensions['Q'].width = 5.86
+    ws.column_dimensions['R'].width = 5.86
+    ws.column_dimensions['S'].width = 5.86
+    ws.column_dimensions['T'].width = 5.86
+
     ws.merge_cells('A1:J2')
     ws.merge_cells('L1:V1')
-    ws.merge_cells('M2:N2')
+    ws.merge_cells('L2:N2')
+    ws.merge_cells('O2:P2')
+    ws.merge_cells('Q2:R2')
+    ws.merge_cells('S2:T2')
+
     ws.cell(row=3, column=1).value = "Name"
     ws.cell(row=3, column=2).value = "POS"
     ws.cell(row=3, column=3).value = "Team"
@@ -44,8 +55,18 @@ def initial_formatting():
     ws.cell(row=3, column=9).value = "AMP"
     ws.cell(row=3, column=10).value = "GPM"
     ws.cell(row=1, column=12).value = "Recent Form"
-    ws.cell(row=2, column=12).value = "vOpp"
-    ws.cell(row=2, column=13).value = "Ceiling"
+    ws.cell(row=2, column=12).value = "Recent High"
+    ws.cell(row=2, column=15).value = "L6"
+    ws.cell(row=2, column=17).value = "L4"
+    ws.cell(row=2, column=19).value = "L2"
+    ws.cell(row=2, column=19).value = "EVAL"
+    ws.cell(row=3, column=15).value = "L6Av"
+    ws.cell(row=3, column=16).value = "L6:Val"
+    ws.cell(row=3, column=17).value = "L4Av"
+    ws.cell(row=3, column=18).value = "L4:Val"
+    ws.cell(row=3, column=19).value = "L2Av"
+    ws.cell(row=3, column=20).value = "L2:Val"
+
     ws['L3'].alignment = Alignment(wrap_text=True)
     ws.cell(row=3, column=12).value = "Last\nGame"
     ws['M3'].alignment = Alignment(wrap_text=True)
@@ -63,6 +84,15 @@ def initial_formatting():
     ws.cell(row=3, column=12).font = Font(size=11)
     ws.cell(row=3, column=13).font = Font(size=11)
     ws.cell(row=3, column=14).font = Font(size=11)
+    ws.cell(row=2, column=12).font = Font(size=13, bold=True)
+    ws.cell(row=2, column=15).font = Font(size=13, bold=True)
+    ws.cell(row=2, column=17).font = Font(size=13, bold=True)
+    ws.cell(row=2, column=19).font = Font(size=13, bold=True)
+
+    ws.cell(row=2, column=12).alignment = Alignment(horizontal='center')
+    ws.cell(row=2, column=15).alignment = Alignment(horizontal='center')
+    ws.cell(row=2, column=17).alignment = Alignment(horizontal='center')
+    ws.cell(row=2, column=19).alignment = Alignment(horizontal='center')
 
     # Recent Form L1 Formatting
     ws.cell(row=1, column=12).alignment = Alignment(horizontal='center')
@@ -186,45 +216,46 @@ def main():
     exists = False
     first_column = ws['A']
     avgGold = 0
-    print(obj['DAY1']['TSM']['Broken']['position'])
-    for day in obj:
-        for team in obj[day]:
-            for player in obj[day][team]:
-                first_column = ws['A']
-                try:
-                    for x in range(len(first_column)):  # Checks if player exists
-                        if first_column[x].value == player:
-                            ws.cell(row=x + 1, column=6).value = float(obj[day][team][player]['gold'])
-                            ws.cell(row=x + 1, column=8).value = Decimal(
-                                (ws.cell(row=x + 1, column=6).value + ws.cell(row=x + 1, column=4).value)) / Decimal(2)
-                            ws.cell(row=x + 1, column=7).value = obj[day][team]['duration']
-                            minutes1 = Decimal(ws.cell(row=x + 1, column=5).value.split(":")[0])
-                            seconds1 = Decimal(ws.cell(row=x + 1, column=5).value.split(":")[1])
-                            minutes2 = Decimal(ws.cell(row=x + 1, column=7).value.split(":")[0])
-                            seconds2 = Decimal(ws.cell(row=x + 1, column=7).value.split(":")[1])
-                            avgMinutes = (minutes1 + minutes2) / Decimal(2)
-                            avgSeconds = (seconds1 + seconds2) / Decimal(2)
-                            ws.cell(row=x + 1, column=9).value = str(int(avgMinutes)) + ":" + str(int(avgSeconds))
 
-                            (m, s) = ws.cell(row=x + 1, column=9).value.split(':')
-                            result = int(m) * 60 + int(s)
-                            ws.cell(row=x + 1, column=10).value = Decimal(1000) * Decimal(ws.cell(row=x + 1, column=8).value) / (Decimal(result) / Decimal(60))
-                            exists = True
-                    if exists is False:
-                        ws.cell(row=row, column=2).value = obj[day][team][player]['position']
-                        ws.cell(row=row, column=1).value = player
-                        if team == '100':
-                            ws.cell(row=row, column=3).value = "100T"
-                        else:
-                            ws.cell(row=row, column=3).value = team
-                        ws.cell(row=row, column=4).value = float(obj[day][team][player]['gold'])
-                        ws.cell(row=row, column=5).value = obj[day][team]['duration']
-                        print(obj[day][team]['duration'])
-                        row += 1
-                except TypeError:
-                    pass
+    for week in obj:
+        for day in obj[week]:
+            for team in obj[week][day]:
+                for player in obj[week][day][team]:
+                    first_column = ws['A']
+                    try:
+                        for x in range(len(first_column)):  # Checks if player exists
+                            if first_column[x].value == player:
+                                ws.cell(row=x + 1, column=6).value = float(obj[week][day][team][player]['gold'])
+                                ws.cell(row=x + 1, column=8).value = Decimal(
+                                    (ws.cell(row=x + 1, column=6).value + ws.cell(row=x + 1, column=4).value)) / Decimal(2)
+                                ws.cell(row=x + 1, column=7).value = obj[week][day][team]['duration']
+                                minutes1 = Decimal(ws.cell(row=x + 1, column=5).value.split(":")[0])
+                                seconds1 = Decimal(ws.cell(row=x + 1, column=5).value.split(":")[1])
+                                minutes2 = Decimal(ws.cell(row=x + 1, column=7).value.split(":")[0])
+                                seconds2 = Decimal(ws.cell(row=x + 1, column=7).value.split(":")[1])
+                                avgMinutes = (minutes1 + minutes2) / Decimal(2)
+                                avgSeconds = (seconds1 + seconds2) / Decimal(2)
+                                ws.cell(row=x + 1, column=9).value = str(int(avgMinutes)) + ":" + str(int(avgSeconds))
 
-                exists = False
+                                (m, s) = ws.cell(row=x + 1, column=9).value.split(':')
+                                result = int(m) * 60 + int(s)
+                                ws.cell(row=x + 1, column=10).value = Decimal(1000) * Decimal(ws.cell(row=x + 1, column=8).value) / (Decimal(result) / Decimal(60))
+                                exists = True
+                        if exists is False:
+                            ws.cell(row=row, column=2).value = obj[week][day][team][player]['position']
+                            ws.cell(row=row, column=1).value = player
+                            if team == '100':
+                                ws.cell(row=row, column=3).value = "100T"
+                            else:
+                                ws.cell(row=row, column=3).value = team
+                            ws.cell(row=row, column=4).value = float(obj[week][day][team][player]['gold'])
+                            ws.cell(row=row, column=5).value = obj[week][day][team]['duration']
+                            print(obj[week][day][team]['duration'])
+                            row += 1
+                    except TypeError:
+                        pass
+
+                    exists = False
 
 
 main()
