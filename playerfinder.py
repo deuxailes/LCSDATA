@@ -20,8 +20,13 @@ getcontext().prec = 4
 with open('player_info.JSON', 'r') as myfile:
     data = myfile.read()
 
+versusArray = [["TSM", "EG"], ["C9", "CLG"], ["DIG", "GG"], ["TL", "100"], ["FLY", "IMT"]]
 obj = json.loads(data)
 
+def versusArrayFunc():
+
+    for i in range(5):
+        versusArray.append([input("Who is the first team?\n"), input("Who are they going against?\n")])
 
 def initial_formatting():
     ws.row_dimensions[1].height = 25.5
@@ -45,10 +50,10 @@ def initial_formatting():
     ws.merge_cells('S2:T2')
 
     ws.cell(row=3, column=1).value = "Name"
-    ws.cell(row=3, column=2).value = "POS"
-    ws.cell(row=3, column=3).value = "Team"
-    ws.cell(row=3, column=4).value = "GD1  "
-    ws.cell(row=3, column=5).value = "MP1  "
+    ws.cell(row=3, column=2).value = "Team"
+    ws.cell(row=3, column=3).value = "POS"
+    ws.cell(row=3, column=4).value = "Opp "
+    ws.cell(row=3, column=5).value = "Proj "
     ws.cell(row=3, column=6).value = "GD2  "
     ws.cell(row=3, column=7).value = "MP2  "
     ws.cell(row=3, column=8).value = "AvG  "
@@ -66,6 +71,13 @@ def initial_formatting():
     ws.cell(row=3, column=18).value = "L4:Val"
     ws.cell(row=3, column=19).value = "L2Av"
     ws.cell(row=3, column=20).value = "L2:Val"
+    ws.cell(row=3, column=21).value = "GD1"
+    ws.cell(row=3, column=22).value = "MP1"
+    ws.cell(row=3, column=23).value = "GD2"
+    ws.cell(row=3, column=24).value = "MP2"
+    ws.cell(row=3, column=25).value = "AvG"
+    ws.cell(row=3, column=26).value = "AvMP"
+    ws.cell(row=3, column=27).value = "GPM"
 
     ws['L3'].alignment = Alignment(wrap_text=True)
     ws.cell(row=3, column=12).value = "Last\nGame"
@@ -137,70 +149,70 @@ def post_formatting():
     dxf = DifferentialStyle(font=red_text, fill=red_fill)
     rule = Rule(type="containsText", operator="containsText", text="highlight", dxf=dxf)
     rule.formula = ['NOT(ISERROR(SEARCH("TSM",B1)))']
-    ws.conditional_formatting.add('B1:F54', rule)
+    ws.conditional_formatting.add('B1:F61', rule)
 
     red_text = Font(color="ffffff")
     red_fill = PatternFill(bgColor="149fda")
     dxf = DifferentialStyle(font=red_text, fill=red_fill)
     rule = Rule(type="containsText", operator="containsText", text="highlight", dxf=dxf)
     rule.formula = ['NOT(ISERROR(SEARCH("C9",B1)))']
-    ws.conditional_formatting.add('B1:F54', rule)
+    ws.conditional_formatting.add('B1:F61', rule)
 
     red_text = Font(color="131313")
     red_fill = PatternFill(bgColor="FFFF66")
     dxf = DifferentialStyle(font=red_text, fill=red_fill)
     rule = Rule(type="containsText", operator="containsText", text="highlight", dxf=dxf)
     rule.formula = ['NOT(ISERROR(SEARCH("DIG",B1)))']
-    ws.conditional_formatting.add('B1:F54', rule)
+    ws.conditional_formatting.add('B1:F61', rule)
 
     red_text = Font(color="ff1d1d")
     red_fill = PatternFill(bgColor="131313")
     dxf = DifferentialStyle(font=red_text, fill=red_fill)
     rule = Rule(type="containsText", operator="containsText", text="highlight", dxf=dxf)
     rule.formula = ['NOT(ISERROR(SEARCH("100T",B1)))']
-    ws.conditional_formatting.add('B1:F54', rule)
+    ws.conditional_formatting.add('B1:F61', rule)
 
     red_text = Font(color="ffffff")
     red_fill = PatternFill(bgColor="092f7e")
     dxf = DifferentialStyle(font=red_text, fill=red_fill)
     rule = Rule(type="containsText", operator="containsText", text="highlight", dxf=dxf)
     rule.formula = ['NOT(ISERROR(SEARCH("TL",B1)))']
-    ws.conditional_formatting.add('B1:F54', rule)
+    ws.conditional_formatting.add('B1:F61', rule)
 
     red_text = Font(color="3399ff")
     red_fill = PatternFill(bgColor="131313")
     dxf = DifferentialStyle(font=red_text, fill=red_fill)
     rule = Rule(type="containsText", operator="containsText", text="highlight", dxf=dxf)
     rule.formula = ['NOT(ISERROR(SEARCH("CLG",B1)))']
-    ws.conditional_formatting.add('B1:F54', rule)
+    ws.conditional_formatting.add('B1:F61', rule)
 
     red_text = Font(color="ffffff")
     red_fill = PatternFill(bgColor="001a33")
     dxf = DifferentialStyle(font=red_text, fill=red_fill)
     rule = Rule(type="containsText", operator="containsText", text="highlight", dxf=dxf)
     rule.formula = ['NOT(ISERROR(SEARCH("EG",B1)))']
-    ws.conditional_formatting.add('B1:F54', rule)
+    ws.conditional_formatting.add('B1:F61', rule)
 
     red_text = Font(color="004d00")
     red_fill = PatternFill(bgColor="e6b800")
     dxf = DifferentialStyle(font=red_text, fill=red_fill)
     rule = Rule(type="containsText", operator="containsText", text="highlight", dxf=dxf)
     rule.formula = ['NOT(ISERROR(SEARCH("FLY",B1)))']
-    ws.conditional_formatting.add('B1:F54', rule)
+    ws.conditional_formatting.add('B1:F61', rule)
 
     red_text = Font(color="33cccc")
     red_fill = PatternFill(bgColor="0a2929")
     dxf = DifferentialStyle(font=red_text, fill=red_fill)
     rule = Rule(type="containsText", operator="containsText", text="highlight", dxf=dxf)
     rule.formula = ['NOT(ISERROR(SEARCH("IMT",B1)))']
-    ws.conditional_formatting.add('B1:F54', rule)
+    ws.conditional_formatting.add('B1:F61', rule)
 
     red_text = Font(color="ffcc33")
     red_fill = PatternFill(bgColor="131313")
     dxf = DifferentialStyle(font=red_text, fill=red_fill)
     rule = Rule(type="containsText", operator="containsText", text="highlight", dxf=dxf)
     rule.formula = ['NOT(ISERROR(SEARCH("GG",B1)))']
-    ws.conditional_formatting.add('B1:F54', rule)
+    ws.conditional_formatting.add('B1:F61', rule)
 
 
     for rows in ws.iter_rows(min_row=1, max_row=54, min_col=11, max_col=11):
@@ -225,38 +237,50 @@ def main():
                     try:
                         for x in range(len(first_column)):  # Checks if player exists
                             if first_column[x].value == player:
-                                ws.cell(row=x + 1, column=6).value = float(obj[week][day][team][player]['gold'])
-                                ws.cell(row=x + 1, column=8).value = Decimal(
-                                    (ws.cell(row=x + 1, column=6).value + ws.cell(row=x + 1, column=4).value)) / Decimal(2)
-                                ws.cell(row=x + 1, column=7).value = obj[week][day][team]['duration']
-                                minutes1 = Decimal(ws.cell(row=x + 1, column=5).value.split(":")[0])
-                                seconds1 = Decimal(ws.cell(row=x + 1, column=5).value.split(":")[1])
-                                minutes2 = Decimal(ws.cell(row=x + 1, column=7).value.split(":")[0])
-                                seconds2 = Decimal(ws.cell(row=x + 1, column=7).value.split(":")[1])
+                                ws.cell(row=x + 1, column=23).value = float(obj[week][day][team][player]['gold'])
+                                ws.cell(row=x + 1, column=25).value = Decimal(
+                                    (ws.cell(row=x + 1, column=23).value + ws.cell(row=x + 1, column=21).value)) / Decimal(2)
+                                ws.cell(row=x + 1, column=24).value = obj[week][day][team]['duration']
+                                minutes1 = Decimal(ws.cell(row=x + 1, column=22).value.split(":")[0])
+                                seconds1 = Decimal(ws.cell(row=x + 1, column=22).value.split(":")[1])
+                                minutes2 = Decimal(ws.cell(row=x + 1, column=24).value.split(":")[0])
+                                seconds2 = Decimal(ws.cell(row=x + 1, column=24).value.split(":")[1])
                                 avgMinutes = (minutes1 + minutes2) / Decimal(2)
                                 avgSeconds = (seconds1 + seconds2) / Decimal(2)
-                                ws.cell(row=x + 1, column=9).value = str(int(avgMinutes)) + ":" + str(int(avgSeconds))
+                                ws.cell(row=x + 1, column=26).value = str(int(avgMinutes)) + ":" + str(int(avgSeconds))
 
-                                (m, s) = ws.cell(row=x + 1, column=9).value.split(':')
+                                (m, s) = ws.cell(row=x + 1, column=26).value.split(':')
                                 result = int(m) * 60 + int(s)
-                                ws.cell(row=x + 1, column=10).value = Decimal(1000) * Decimal(ws.cell(row=x + 1, column=8).value) / (Decimal(result) / Decimal(60))
+                                ws.cell(row=x + 1, column=27).value = Decimal(1000) * Decimal(ws.cell(row=x + 1, column=25).value) / (Decimal(result) / Decimal(60))
                                 exists = True
                         if exists is False:
-                            ws.cell(row=row, column=2).value = obj[week][day][team][player]['position']
+                            ws.cell(row=row, column=3).value = obj[week][day][team][player]['position'] + " "
                             ws.cell(row=row, column=1).value = player
                             if team == '100':
-                                ws.cell(row=row, column=3).value = "100T"
+                                ws.cell(row=row, column=2).value = "100T"
                             else:
-                                ws.cell(row=row, column=3).value = team
-                            ws.cell(row=row, column=4).value = float(obj[week][day][team][player]['gold'])
-                            ws.cell(row=row, column=5).value = obj[week][day][team]['duration']
+                                ws.cell(row=row, column=2).value = team
+                            ws.cell(row=row, column=21).value = float(obj[week][day][team][player]['gold'])
+                            ws.cell(row=row, column=22).value = obj[week][day][team]['duration']
+                            for i in range(len(versusArray)):
+                                if versusArray[i][0] == team:
+                                    if versusArray[i][1] == '100':
+                                        ws.cell(row=row, column=4).value = "100T"
+                                    else:
+                                        ws.cell(row=row, column=4).value = versusArray[i][1]
+                                elif versusArray[i][1] == team:
+                                    if versusArray[i][0] == '100':
+                                        ws.cell(row=row, column=4).value = '100T'
+                                    else:
+                                        ws.cell(row=row, column=4).value = versusArray[i][0]
                             print(obj[week][day][team]['duration'])
                             row += 1
                     except TypeError:
                         pass
 
                     exists = False
-
+    #versusArrayFunc()
+    #print(versusArray)
 
 main()
 post_formatting()
